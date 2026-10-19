@@ -14,7 +14,12 @@ export default defineMcpClientConnection({
   description:
     "Contentful CMS: read the content model and locales, find entries, and create or update draft entries.",
   // Connector created with `vercel connect create mcp.contentful.com`.
-  auth: connect("mcp.contentful.com/cms-publishing-agent"),
+  auth: connect({
+    connector: "mcp.contentful.com/cms-publishing-agent",
+    // Without an explicit resource indicator, Contentful issues a token for
+    // its internal origin and the MCP server rejects it (audience mismatch).
+    tokenParams: { resources: ["https://mcp.contentful.com/mcp"] },
+  }),
   tools: {
     allow: [
       "get_initial_context",
