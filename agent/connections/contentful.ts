@@ -1,6 +1,12 @@
 import { connect } from "@vercel/connect/eve";
 import { defineMcpClientConnection } from "eve/connections";
 
+function requiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is not set`);
+  return value;
+}
+
 /**
  * Contentful's hosted MCP server, authorized per user through Vercel Connect.
  *
@@ -8,6 +14,10 @@ import { defineMcpClientConnection } from "eve/connections";
  * discover and call these tools. Publishing, unpublishing, archiving,
  * deleting, and every content type, environment, and release tool are left
  * out, so the agent cannot take them no matter what it is asked.
+ *
+ * The space and environment come from the app, not the model: eve removes
+ * `spaceId` and `environmentId` from every tool's schema and fills them in
+ * from env vars, so the model cannot point a call at another environment.
  */
 export default defineMcpClientConnection({
   url: "https://mcp.contentful.com/mcp",
@@ -31,5 +41,11 @@ export default defineMcpClientConnection({
       "create_entry",
       "update_entry",
     ],
+  },
+  toolCall: {
+    providedArguments: {
+      spaceId: () => requiredEnv("CONTENTFUL_SPACE_ID"),
+      environmentId: () => requiredEnv("CONTENTFUL_ENVIRONMENT_ID"),
+    },
   },
 });
