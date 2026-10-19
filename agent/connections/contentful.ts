@@ -13,7 +13,7 @@ export default defineMcpClientConnection({
   url: "https://mcp.contentful.com/mcp",
   description:
     "Contentful CMS: read the content model and locales, find entries, and create or update draft entries.",
-  // Replace with the connector UID printed by `vercel connect create`.
+  // Connector created with `vercel connect create mcp.contentful.com`.
   auth: connect("mcp.contentful.com/cms-publishing-agent"),
   tools: {
     allow: [
