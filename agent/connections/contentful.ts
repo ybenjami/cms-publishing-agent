@@ -26,6 +26,8 @@ export default defineMcpClientConnection({
   // Connector created with `vercel connect create mcp.contentful.com`.
   auth: connect({
     connector: "mcp.contentful.com/cms-publishing-agent",
+    // Shown on sign-in prompts instead of the connector's internal name.
+    displayName: "Contentful",
     // Without an explicit resource indicator, Contentful issues a token for
     // its internal origin and the MCP server rejects it (audience mismatch).
     tokenParams: { resources: ["https://mcp.contentful.com/mcp"] },

@@ -38,14 +38,14 @@ happens, what we do about it today, and what fixing it means.
   flagged as potentially violating our usage policy" for a harmless request.
   It passed on rerun and in three full-suite runs after. Fix: watch for it;
   if it recurs, find which part of the prompt trips the filter.
-- **A new Contentful sign-in may revoke earlier tokens (unconfirmed).** After
+- **A new Contentful sign-in revokes the same user's earlier token.** After
   signing in to Contentful from Slack, the `local-developer` grant's token
-  (same Contentful user, same OAuth client) started failing with 401 "Invalid
-  access token", even after a forced refresh from Vercel Connect. If
-  Contentful keeps one live token per user per client, the TUI and Slack
-  will keep signing each other out, and Connect still reports the dead token
-  as valid. Fix: confirm with a second sign-in, then check whether eve
-  re-prompts on the MCP 401 or the agent just fails.
+  (same Contentful user, same OAuth client) failed with 401 "Invalid access
+  token", even after a forced refresh from Vercel Connect. The agent handles
+  it: the next local request asked to sign in again instead of failing. The
+  cost is that one person using both the TUI and Slack signs in again each
+  time they switch. Fix: none needed for the POC; worth confirming with
+  Contentful whether it keeps one live token per user per client.
 - **`vercel logs` returns no records for this project.** Queries for the
   production deployment return zero records, including for a request made
   minutes earlier. Fix: check the Vercel dashboard's runtime logs, or wait
