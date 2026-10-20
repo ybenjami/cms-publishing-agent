@@ -11,13 +11,19 @@ import {
  * Contentful as themselves. That needs a user principal on the session, and
  * the plain `localDev()` principal is not one. During `eve dev` only, this
  * treats the local developer as a user so the Contentful sign-in can run in
- * the terminal UI. `localDev()` matches nothing in production, so neither
- * does this.
+ * the terminal UI. It also lets local evals stub tool results, so they never
+ * write to Contentful. `localDev()` matches nothing in production, so
+ * neither does this.
  */
 const localDeveloper: AuthFn<Request> = async (request) => {
   const caller = await localDev()(request);
   if (!caller) return null;
-  return { ...caller, principalType: "user", principalId: "local-developer" };
+  return {
+    ...caller,
+    principalType: "user",
+    principalId: "local-developer",
+    allowToolStubs: true,
+  };
 };
 
 export default eveChannel({

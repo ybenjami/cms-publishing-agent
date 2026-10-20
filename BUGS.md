@@ -28,6 +28,11 @@ happens, what we do about it today, and what fixing it means.
   connection's `tools.allow` is the only layer verified to work. Fix: confirm
   the app config on the sandbox environment, then test a blocked call outside
   the agent.
+- **OpenAI prompt filter false positive.** One run of the
+  `extra-information` eval failed with "Invalid prompt: your prompt was
+  flagged as potentially violating our usage policy" for a harmless request.
+  It passed on rerun and in three full-suite runs after. Fix: watch for it;
+  if it recurs, find which part of the prompt trips the filter.
 - **Unused Vercel Connect grants.** The first `vercel connect token` grant
   (bound to the wrong audience) and a test grant for `local-developer`
   without an issuer still exist. Fix: `vercel connect revoke-tokens` before
