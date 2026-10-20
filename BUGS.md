@@ -12,11 +12,12 @@ happens, what we do about it today, and what fixing it means.
   remote invoke result." Workaround: keep only `authorization`, `description`,
   `name`, and `webhookUrl` on each authorization before resuming. Fix: report
   upstream to eve.
-- **Model detours through eve's bundled dev extensions.** In `eve dev`, the
-  model handed the first Contentful request to the self-modification agent,
-  registry search, and `bash` before calling the Contentful tools. Fix: check
-  whether the step 6 instructions stop it; otherwise run dev with
-  `--no-default-extensions`.
+- **Model detours through eve's bundled dev extensions.** In `eve dev`, before
+  the agent had instructions, the model handed the first Contentful request to
+  the self-modification agent, registry search, and `bash` before calling the
+  Contentful tools. With the instructions in place, one test run still made a
+  single stray `bash` call; the next made none. Fix if it keeps happening: run
+  dev with `--no-default-extensions`.
 - **Local `bash` sandbox fails to start.** Every `bash` call in `eve dev`
   fails with "Failed to prepare microsandbox [database] … Migration file …
   is missing". Not needed by this agent. Fix: clear the local microsandbox
