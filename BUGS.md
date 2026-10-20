@@ -22,6 +22,11 @@ happens, what we do about it today, and what fixing it means.
   fails with "Failed to prepare microsandbox [database] … Migration file …
   is missing". Not needed by this agent. Fix: clear the local microsandbox
   state or report upstream if it persists.
+- **`eve dev` adds sandbox packages to `package.json` on its own.** After the
+  model tried the bundled `bash` tool, `just-bash` and `microsandbox` showed
+  up as dev dependencies (plus about 1,100 lines of `package-lock.json`).
+  This agent doesn't use a sandbox, so we revert them. Fix: run dev with
+  `--no-default-extensions` if it keeps happening, or report upstream.
 - **Contentful's server-side MCP app config does not filter `tools/list`.**
   The live server lists all 85 tools, including publish, delete, environment,
   and release tools. It may still refuse them at call time (untested). The
