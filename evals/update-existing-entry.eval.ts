@@ -1,7 +1,10 @@
 import { defineEval } from "eve/evals";
-import { contentfulStubs, springPlantSale } from "./fixtures/contentful.js";
-
-type UpdateEntryInput = { entryId: string; version: number; fields: Record<string, unknown> };
+import {
+  contentfulStubs,
+  inputMatching,
+  springPlantSale,
+  type UpdateEntryInput,
+} from "./fixtures/contentful.js";
 
 export default defineEval({
   description:
@@ -16,16 +19,14 @@ export default defineEval({
     turn.notCalledTool("contentful__create_entry");
     turn.calledTool("contentful__update_entry", {
       count: 1,
-      input: (value) => {
-        const input = value as unknown as UpdateEntryInput;
-        return (
-          input.entryId === "springPlantSale" &&
-          input.version === 7 &&
-          JSON.stringify(input.fields).includes("May 3")
-        );
-      },
+      input: inputMatching<UpdateEntryInput>(
+        ({ entryId, version, fields }) =>
+          entryId === springPlantSale.sys.id &&
+          version === springPlantSale.sys.version &&
+          JSON.stringify(fields).includes("May 3"),
+      ),
     });
-    turn.messageIncludes("entries/springPlantSale");
+    turn.messageIncludes(`entries/${springPlantSale.sys.id}`);
     t.judge(
       "The reply says the entry was updated and that the live, published version stays unchanged until someone publishes the changes.",
     ).gate(0.7);

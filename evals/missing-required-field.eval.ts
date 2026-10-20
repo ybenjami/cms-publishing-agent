@@ -1,7 +1,10 @@
 import { defineEval } from "eve/evals";
-import { contentfulStubs } from "./fixtures/contentful.js";
-
-type CreateEntryInput = { contentTypeId: string; fields: Record<string, unknown> };
+import {
+  contentfulStubs,
+  type CreateEntryInput,
+  inputMatching,
+  newEntryId,
+} from "./fixtures/contentful.js";
 
 export default defineEval({
   description:
@@ -15,14 +18,12 @@ export default defineEval({
     turn.expectOk();
     turn.calledTool("contentful__create_entry", {
       count: 1,
-      input: (value) => {
-        const input = value as unknown as CreateEntryInput;
-        return (
-          input.contentTypeId === "blogPost" && "title" in input.fields && !("body" in input.fields)
-        );
-      },
+      input: inputMatching<CreateEntryInput>(
+        ({ contentTypeId, fields }) =>
+          contentTypeId === "blogPost" && "title" in fields && !("body" in fields),
+      ),
     });
-    turn.messageIncludes("entries/newEntry1");
+    turn.messageIncludes(`entries/${newEntryId}`);
     t.judge("The reply says the required Body field is still missing.").gate(0.7);
   },
 });

@@ -1,10 +1,7 @@
 import { eveChannel } from "eve/channels/eve";
-import {
-  type AuthFn,
-  localDev,
-  placeholderAuth,
-  vercelOidc,
-} from "eve/channels/auth";
+import { type AuthFn, localDev, placeholderAuth, vercelOidc } from "eve/channels/auth";
+
+const isLocalDev = localDev();
 
 /**
  * The Contentful connection is user-scoped: each person signs in to
@@ -16,7 +13,7 @@ import {
  * neither does this.
  */
 const localDeveloper: AuthFn<Request> = async (request) => {
-  const caller = await localDev()(request);
+  const caller = await isLocalDev(request);
   if (!caller) return null;
   return {
     ...caller,

@@ -1,3 +1,9 @@
+/**
+ * A small, fixed Contentful content model for evals. Every Contentful call is
+ * stubbed, so evals are repeatable and never write to a real space. The
+ * connection still lists its tools live, so `eve eval` needs a Contentful
+ * sign-in.
+ */
 import type { ToolStub, ToolStubOutcome } from "eve/evals";
 
 type JsonValue = Extract<ToolStubOutcome, { response: unknown }>["response"];
@@ -5,12 +11,26 @@ type JsonValue = Extract<ToolStubOutcome, { response: unknown }>["response"];
 /** Fixture objects are plain JSON; this tells TypeScript so. */
 const json = (value: object) => value as JsonValue;
 
+/** The input the agent sends to `contentful__create_entry`. */
+export interface CreateEntryInput {
+  contentTypeId: string;
+  fields: Record<string, unknown>;
+}
+
+/** The input the agent sends to `contentful__update_entry`. */
+export interface UpdateEntryInput {
+  entryId: string;
+  version: number;
+  fields: Record<string, unknown>;
+}
+
 /**
- * A small, fixed Contentful content model for evals. Every Contentful call is
- * stubbed, so evals are repeatable and never write to a real space. The
- * connection still lists its tools live, so `eve eval` needs a Contentful
- * sign-in.
+ * Wraps a typed predicate as a `calledTool` input matcher. eve records tool
+ * inputs as plain JSON, so the cast restores the shape the tool expects.
  */
+export function inputMatching<Input>(predicate: (input: Input) => boolean) {
+  return (value: object) => predicate(value as Input);
+}
 
 const blogPost = {
   sys: { id: "blogPost", type: "ContentType" },
@@ -18,7 +38,14 @@ const blogPost = {
   description: "A post for the blog.",
   displayField: "title",
   fields: [
-    { id: "title", name: "Title", type: "Symbol", required: true, localized: false, validations: [] },
+    {
+      id: "title",
+      name: "Title",
+      type: "Symbol",
+      required: true,
+      localized: false,
+      validations: [],
+    },
     {
       id: "slug",
       name: "Slug",
@@ -35,7 +62,14 @@ const blogPost = {
       localized: false,
       validations: [{ size: { max: 200 } }],
     },
-    { id: "body", name: "Body", type: "RichText", required: true, localized: false, validations: [] },
+    {
+      id: "body",
+      name: "Body",
+      type: "RichText",
+      required: true,
+      localized: false,
+      validations: [],
+    },
     {
       id: "author",
       name: "Author",
@@ -45,7 +79,14 @@ const blogPost = {
       localized: false,
       validations: [{ linkContentType: ["author"] }],
     },
-    { id: "publishDate", name: "Publish Date", type: "Date", required: false, localized: false, validations: [] },
+    {
+      id: "publishDate",
+      name: "Publish Date",
+      type: "Date",
+      required: false,
+      localized: false,
+      validations: [],
+    },
   ],
 };
 
@@ -55,9 +96,30 @@ const newsArticle = {
   description: "An article for the news section.",
   displayField: "headline",
   fields: [
-    { id: "headline", name: "Headline", type: "Symbol", required: true, localized: false, validations: [] },
-    { id: "body", name: "Body", type: "RichText", required: true, localized: false, validations: [] },
-    { id: "publishDate", name: "Publish Date", type: "Date", required: false, localized: false, validations: [] },
+    {
+      id: "headline",
+      name: "Headline",
+      type: "Symbol",
+      required: true,
+      localized: false,
+      validations: [],
+    },
+    {
+      id: "body",
+      name: "Body",
+      type: "RichText",
+      required: true,
+      localized: false,
+      validations: [],
+    },
+    {
+      id: "publishDate",
+      name: "Publish Date",
+      type: "Date",
+      required: false,
+      localized: false,
+      validations: [],
+    },
   ],
 };
 
@@ -70,6 +132,9 @@ const author = {
     { id: "name", name: "Name", type: "Symbol", required: true, localized: false, validations: [] },
   ],
 };
+
+/** The ID the stubbed `create_entry` gives every new entry. */
+export const newEntryId = "newEntry1";
 
 export const blogPostFieldIds = blogPost.fields.map((field) => field.id);
 
@@ -141,7 +206,9 @@ export function contentfulStubs({ entries = [] as (typeof springPlantSale)[] } =
       outcome: {
         response: {
           total: 1,
-          items: [{ code: "en-US", name: "English (United States)", default: true, fallbackCode: null }],
+          items: [
+            { code: "en-US", name: "English (United States)", default: true, fallbackCode: null },
+          ],
         },
       },
     },
@@ -159,13 +226,15 @@ export function contentfulStubs({ entries = [] as (typeof springPlantSale)[] } =
     {
       id: "create-entry",
       tool: "contentful__create_entry",
-      outcome: { response: { sys: { id: "newEntry1", type: "Entry", version: 1 } } },
+      outcome: { response: { sys: { id: newEntryId, type: "Entry", version: 1 } } },
     },
     {
       id: "update-entry",
       tool: "contentful__update_entry",
       outcome: {
-        response: { sys: { id: springPlantSale.sys.id, type: "Entry", version: 8, publishedVersion: 6 } },
+        response: {
+          sys: { id: springPlantSale.sys.id, type: "Entry", version: 8, publishedVersion: 6 },
+        },
       },
     },
   ];
