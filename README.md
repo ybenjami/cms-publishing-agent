@@ -2,6 +2,8 @@
 
 A proof-of-concept AI agent that prepares content in [Contentful](https://www.contentful.com) but never publishes it. You ask in plain language, it writes a draft entry, and a person reviews and publishes it in Contentful.
 
+![A Slack DM asking the agent to add a news article from a draft, the private prompt to sign in to Contentful, and the agent's reply with a link to the new draft and a note on what was left out](docs/slack-request.png)
+
 It's built with [eve](https://eve.dev), Vercel's agent framework, and talks to Contentful through Contentful's hosted MCP server. You can use it from eve's terminal UI or from Slack.
 
 This is a POC, not a product: it does the five things below and nothing more.
@@ -18,9 +20,13 @@ This is a POC, not a product: it does the five things below and nothing more.
 
 These live in [`agent/instructions.md`](agent/instructions.md) and are checked by the [evals](#evals).
 
-- **More information than the content type holds:** fill what fits, leave out what doesn't, and say what was left out. Don't fail and don't ask a dozen questions.
-- **Ambiguous content type or target entry:** ask before changing anything.
-- **Required fields, validations, and references** are respected. The agent never invents a value for a required field; it creates the draft without it and lists what's missing, since Contentful only enforces required fields at publish time.
+- **More information than the content type holds:** fill what fits, leave out what doesn't, and say what was left out. Don't fail, and don't ask a dozen questions.
+- **One field, one purpose:** details like an author, a credit or a sponsor never get folded into body text. If no field fits, they're left out and listed in the reply.
+- **Keep the requester's words:** text goes into fields as written. Derived fields like a slug or a summary only restate the request.
+- **Ambiguous content type or target entry:** ask one short question before creating or changing anything.
+- **Required fields:** never invent a value. The draft is created without it and the missing fields are listed, since Contentful only enforces required fields at publish time.
+- **Validations and references:** values respect each field's validations, and references link only to entries found by search.
+- **Updates to published entries:** the reply says the live version stays unchanged until someone publishes.
 - **Nothing that matters is dropped silently.** Leaving out an optional field that doesn't apply is fine.
 
 ## Guardrails
@@ -43,16 +49,19 @@ The "never publish" rule is enforced by configuration, not by the prompt.
 | [`agent/lib/contentful.ts`](agent/lib/contentful.ts)                                 | The MCP URL and the target space and environment, read from the environment variables and checked once for both files above.                              |
 | [`agent/channels/eve.ts`](agent/channels/eve.ts)                                     | eve's own channel (terminal UI and HTTP). In local development, treats you as a user so the Contentful sign-in can run, and lets evals stub tool results. |
 | [`agent/channels/slack.ts`](agent/channels/slack.ts)                                 | Slack mentions and DMs through a Vercel Connect Slack app.                                                                                                |
-| [`evals/`](evals)                                                                    | Evals for the four behavior rules.                                                                                                                        |
+| [`evals/`](evals)                                                                    | Evals for the behavior rules.                                                                                                                             |
 
 ## Run it yourself
 
 ### Prerequisites
 
 - **Node.js 24** (see [`.nvmrc`](.nvmrc)).
+- **The Vercel CLI** (`npm i -g vercel`), since setup uses `vercel connect` and `vercel env`.
 - **A Vercel account** with [AI Gateway](https://vercel.com/docs/ai-gateway) credits. The free tier doesn't include the model this agent uses; add paid credits on the team that owns the project.
 - **A Contentful space** with a non-`master` environment to write to, and the Contentful MCP app installed in it.
 - **Optional: a Slack workspace** where you can install apps.
+
+Tested with eve 0.81. eve is in public preview, so APIs may change.
 
 ### Set up
 
@@ -99,11 +108,15 @@ Setup creates a Slack app through Vercel Connect for the connector named in [`ag
 
 ### Evals
 
+Sign in to Contentful once through `npm run dev` first (finish a request that asks you to). Then, with the dev server still running:
+
 ```bash
-npm run eval
+npm run eval -- --url http://127.0.0.1:2000
 ```
 
-The four evals cover extra information beyond the content type, a missing required field, an ambiguous content type, and updating an existing entry. Every Contentful call is stubbed with a small fixture content model ([`evals/fixtures/contentful.ts`](evals/fixtures/contentful.ts)), so evals are repeatable and never write to Contentful. eve still lists the connection's tools live, so sign in to Contentful once through `npm run dev` before running them.
+EVALS_PLAIN_RUN
+
+The five evals cover extra information beyond the content type, a missing required field, an ambiguous content type, updating an existing entry, and a multi-sentence draft for a content type with no rich text body, where every sentence must be saved in a field or named in the reply. Every Contentful call is stubbed with a small fixture content model ([`evals/fixtures/contentful.ts`](evals/fixtures/contentful.ts)), so evals are repeatable and never write to Contentful. eve still lists the connection's tools live, which is why they need your Contentful sign-in. They do call the live model, so each run uses AI Gateway credits.
 
 ## Known issues
 
@@ -114,6 +127,10 @@ Found while building this; each one notes what the project does about it.
 - **Contentful's MCP server listed all 85 tools** for this project's sign-in, including publish and delete. The connection's allow-list is what keeps them away from the model; don't rely on the server to hide them.
 - **eve's optional built-in tools can distract the model.** Before `defaultTools: false`, the model in `eve dev` tried eve's `bash` tool and self-modification agent before the Contentful tools, and eve then added `just-bash` and `microsandbox` to `package.json`. The agent now turns those tools off. If eve's development extensions still get in the way, run `eve dev --no-default-extensions`.
 - **`eve remote invoke --resume` (eve 0.81) rejects its own output after a sign-in.** The paused result has extra fields that the resume schema doesn't allow. Keep only `authorization`, `description`, `name`, and `webhookUrl` on each authorization before resuming.
+
+## How this was built
+
+Built with Claude Code as a pair programmer. The architecture, guardrails, and behavior rules are my decisions; the commit history shows how they evolved.
 
 ## License
 
