@@ -123,6 +123,32 @@ const newsArticle = {
   ],
 };
 
+/** One short field and one long-text field, with no rich text body. */
+export const exhibitUpdate = {
+  sys: { id: "exhibitUpdate", type: "ContentType" },
+  name: "Exhibit Update",
+  description: "A short update about an exhibit.",
+  displayField: "headline",
+  fields: [
+    {
+      id: "headline",
+      name: "Headline",
+      type: "Symbol",
+      required: true,
+      localized: false,
+      validations: [],
+    },
+    {
+      id: "details",
+      name: "Details",
+      type: "Text",
+      required: false,
+      localized: false,
+      validations: [],
+    },
+  ],
+};
+
 const author = {
   sys: { id: "author", type: "ContentType" },
   name: "Author",
@@ -138,7 +164,10 @@ export const newEntryId = "newEntry1";
 
 export const blogPostFieldIds = blogPost.fields.map((field) => field.id);
 
-const contentTypes = [blogPost, newsArticle, author];
+/** The content model most evals use: two similar types and a reference target. */
+const defaultContentTypes = [blogPost, newsArticle, author];
+
+type ContentType = (typeof defaultContentTypes)[number] | typeof exhibitUpdate;
 
 /** An existing, published blog post for the update eval. */
 export const springPlantSale = {
@@ -177,10 +206,14 @@ export const springPlantSale = {
 };
 
 /**
- * Stubs for reading the content model and writing entries. Pass `entries` to
- * control what `search_entries` finds.
+ * Stubs for reading the content model and writing entries. Pass
+ * `contentTypes` to change the model the agent sees, and `entries` to control
+ * what `search_entries` finds.
  */
-export function contentfulStubs({ entries = [] as (typeof springPlantSale)[] } = {}): ToolStub[] {
+export function contentfulStubs({
+  contentTypes = defaultContentTypes as ContentType[],
+  entries = [] as (typeof springPlantSale)[],
+} = {}): ToolStub[] {
   return [
     {
       id: "initial-context",

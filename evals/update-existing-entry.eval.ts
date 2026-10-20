@@ -17,8 +17,10 @@ export default defineEval({
 
     turn.expectOk();
     turn.notCalledTool("contentful__create_entry");
+    // The agent may re-read and correct its update, so require at least one
+    // correct call rather than exactly one.
     turn.calledTool("contentful__update_entry", {
-      count: 1,
+      count: (count) => count >= 1,
       input: inputMatching<UpdateEntryInput>(
         ({ entryId, version, fields }) =>
           entryId === springPlantSale.sys.id &&
