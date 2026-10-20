@@ -18,7 +18,7 @@ This is a POC, not a product: it does the five things below and nothing more.
 
 ## Behavior rules
 
-These live in [`agent/instructions.md`](agent/instructions.md) and are checked by the [evals](#evals).
+These live in [`agent/instructions.md`](agent/instructions.md). The [evals](#evals) check all of them except validations and references.
 
 - **More information than the content type holds:** fill what fits, leave out what doesn't, and say what was left out. Don't fail, and don't ask a dozen questions.
 - **One field, one purpose:** details like an author, a credit or a sponsor never get folded into body text. If no field fits, they're left out and listed in the reply.
@@ -114,9 +114,9 @@ Sign in to Contentful once through `npm run dev` first (finish a request that as
 npm run eval -- --url http://127.0.0.1:2000
 ```
 
-EVALS_PLAIN_RUN
+`npm run eval` without `--url` won't start while a dev server is running for the project.
 
-The five evals cover extra information beyond the content type, a missing required field, an ambiguous content type, updating an existing entry, and a multi-sentence draft for a content type with no rich text body, where every sentence must be saved in a field or named in the reply. Every Contentful call is stubbed with a small fixture content model ([`evals/fixtures/contentful.ts`](evals/fixtures/contentful.ts)), so evals are repeatable and never write to Contentful. eve still lists the connection's tools live, which is why they need your Contentful sign-in. They do call the live model, so each run uses AI Gateway credits.
+There are five evals. Four cover extra information beyond the content type, a missing required field, an ambiguous content type, and updating an existing entry. The fifth sends a multi-sentence draft for an Announcement (a headline and a long-text field, no rich text body) and checks that every substantive sentence is saved while the photo credit, which has no field, is left out and reported. Every Contentful call is stubbed with a small fixture content model ([`evals/fixtures/contentful.ts`](evals/fixtures/contentful.ts)), so evals are repeatable and never write to Contentful. eve still lists the connection's tools live, which is why they need your Contentful sign-in. They do call the live model, so each run uses AI Gateway credits.
 
 ## Known issues
 
