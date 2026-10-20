@@ -28,20 +28,22 @@ These live in [`agent/instructions.md`](agent/instructions.md) and are checked b
 The "never publish" rule is enforced by configuration, not by the prompt.
 
 - **Tool allow-list.** Contentful's MCP server offers 85 tools, including publish, unpublish, archive, delete, and content type, environment, and release management. The connection in [`agent/connections/contentful.ts`](agent/connections/contentful.ts) exposes only eight: `get_initial_context`, `list_content_types`, `get_content_type`, `list_locales`, `search_entries`, `get_entry`, `create_entry`, and `update_entry`. The model can't discover or call anything else.
-- **Pinned space and environment.** The model never chooses where to write. eve removes `spaceId` and `environmentId` from every tool's schema and fills them in from the `CONTENTFUL_SPACE_ID` and `CONTENTFUL_ENVIRONMENT_ID` environment variables. Point them at a sandbox environment, not `master`.
+- **Pinned space and environment.** The model never chooses where to write. eve removes `spaceId` and `environmentId` from every tool's schema and fills them in from the `CONTENTFUL_SPACE_ID` and `CONTENTFUL_ENVIRONMENT_ID` environment variables. The agent refuses to build or run when the environment is `master`, so point them at a sandbox environment.
+- **No other tools.** eve's optional built-in tools (shell, file, web, and subagent) are turned off in [`agent/agent.ts`](agent/agent.ts), so a pasted draft can't steer the agent toward a shell or the open web.
 - **Per-user sign-in.** Each person signs in to Contentful as themselves (OAuth through [Vercel Connect](https://vercel.com/kb/guide/vercel-connect)), so the agent can only do what that person's Contentful role allows. In Slack, the sign-in link is sent privately to the person who asked.
 
 ## How it's built
 
-| File | What it does |
-| --- | --- |
-| [`agent/agent.ts`](agent/agent.ts) | The model (`openai/gpt-6-luna-fast` through Vercel AI Gateway). |
-| [`agent/instructions.md`](agent/instructions.md) | The workflow and behavior rules. |
-| [`agent/instructions/contentful-target.ts`](agent/instructions/contentful-target.ts) | Tells the model which space and environment it works in, so it can build the entry link. Built from the environment variables at build time. |
-| [`agent/connections/contentful.ts`](agent/connections/contentful.ts) | Contentful's MCP server (`https://mcp.contentful.com/mcp`), Vercel Connect auth, the tool allow-list, and the pinned space and environment. |
-| [`agent/channels/eve.ts`](agent/channels/eve.ts) | eve's own channel (terminal UI and HTTP). In local development, treats you as a user so the Contentful sign-in can run, and lets evals stub tool results. |
-| [`agent/channels/slack.ts`](agent/channels/slack.ts) | Slack mentions and DMs through a Vercel Connect Slack app. |
-| [`evals/`](evals) | Evals for the four behavior rules. |
+| File                                                                                 | What it does                                                                                                                                              |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`agent/agent.ts`](agent/agent.ts)                                                   | The model (`openai/gpt-6-luna-fast` through Vercel AI Gateway), with eve's optional built-in tools turned off so only the Contentful tools are available. |
+| [`agent/instructions.md`](agent/instructions.md)                                     | The workflow and behavior rules.                                                                                                                          |
+| [`agent/instructions/contentful-target.ts`](agent/instructions/contentful-target.ts) | Tells the model which space and environment it works in, so it can build the entry link. Built from the environment variables at build time.              |
+| [`agent/connections/contentful.ts`](agent/connections/contentful.ts)                 | Contentful's MCP server (`https://mcp.contentful.com/mcp`), Vercel Connect auth, the tool allow-list, and the pinned space and environment.               |
+| [`agent/lib/contentful.ts`](agent/lib/contentful.ts)                                 | The MCP URL and the target space and environment, read from the environment variables and checked once for both files above.                              |
+| [`agent/channels/eve.ts`](agent/channels/eve.ts)                                     | eve's own channel (terminal UI and HTTP). In local development, treats you as a user so the Contentful sign-in can run, and lets evals stub tool results. |
+| [`agent/channels/slack.ts`](agent/channels/slack.ts)                                 | Slack mentions and DMs through a Vercel Connect Slack app.                                                                                                |
+| [`evals/`](evals)                                                                    | Evals for the four behavior rules.                                                                                                                        |
 
 ## Run it yourself
 
@@ -70,7 +72,7 @@ The "never publish" rule is enforced by configuration, not by the prompt.
 
    Its UID is `mcp.contentful.com/<your-name>`. Unless you used `cms-publishing-agent`, put yours in [`agent/connections/contentful.ts`](agent/connections/contentful.ts).
 
-3. Set the space and environment, then pull them into `.env.local`:
+3. Set the space and environment (see [`.env.example`](.env.example)), then pull them into `.env.local`:
 
    ```bash
    vercel env add CONTENTFUL_SPACE_ID
@@ -110,7 +112,7 @@ Found while building this; each one notes what the project does about it.
 - **Contentful tokens need a resource indicator.** Without one, Contentful issues a token for its internal origin and the MCP server rejects it with 401 "Token audience does not match resource server". The connection passes `tokenParams: { resources: ["https://mcp.contentful.com/mcp"] }` to fix it.
 - **A new Contentful sign-in revokes the same person's earlier token.** If you use both the terminal UI and Slack, you'll sign in again each time you switch. The agent asks for the new sign-in on its own.
 - **Contentful's MCP server listed all 85 tools** for this project's sign-in, including publish and delete. The connection's allow-list is what keeps them away from the model; don't rely on the server to hide them.
-- **eve's bundled development extensions can distract the model.** Without instructions, the model in `eve dev` tried eve's self-modification agent and `bash` before the Contentful tools, and eve then added `just-bash` and `microsandbox` to `package.json`. The instructions mostly prevent this; if it happens, revert those dependencies or run `eve dev --no-default-extensions`.
+- **eve's optional built-in tools can distract the model.** Before `defaultTools: false`, the model in `eve dev` tried eve's `bash` tool and self-modification agent before the Contentful tools, and eve then added `just-bash` and `microsandbox` to `package.json`. The agent now turns those tools off. If eve's development extensions still get in the way, run `eve dev --no-default-extensions`.
 - **`eve remote invoke --resume` (eve 0.81) rejects its own output after a sign-in.** The paused result has extra fields that the resume schema doesn't allow. Keep only `authorization`, `description`, `name`, and `webhookUrl` on each authorization before resuming.
 
 ## License
