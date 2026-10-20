@@ -1,6 +1,7 @@
 {
   "name": "cms-publishing-agent",
   "version": "0.0.0",
+  "private": true,
   "license": "MIT",
   "type": "module",
   "imports": {
@@ -12,6 +13,8 @@
     "deploy": "eve deploy",
     "dev": "eve dev",
     "eval": "eve eval",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "start": "eve start",
     "typecheck": "tsc"
   },
@@ -23,10 +26,10 @@
   },
   "devDependencies": {
     "@types/node": "24.x",
+    "prettier": "3.6.2",
     "typescript": "7.0.2"
   },
   "engines": {
     "node": "24.x"
   }
-
 }

@@ -5,6 +5,10 @@
     "moduleResolution": "bundler",
     "types": ["node", "eve/workflow-modules"],
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true
