@@ -1,11 +1,6 @@
 import { connect } from "@vercel/connect/eve";
 import { defineMcpClientConnection } from "eve/connections";
-
-function requiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`${name} is not set`);
-  return value;
-}
+import { CONTENTFUL_MCP_URL, contentfulTarget } from "../lib/contentful.js";
 
 /**
  * Contentful's hosted MCP server, authorized per user through Vercel Connect.
@@ -20,7 +15,7 @@ function requiredEnv(name: string): string {
  * from env vars, so the model cannot point a call at another environment.
  */
 export default defineMcpClientConnection({
-  url: "https://mcp.contentful.com/mcp",
+  url: CONTENTFUL_MCP_URL,
   description:
     "Contentful CMS: read the content model and locales, find entries, and create or update draft entries.",
   // Connector created with `vercel connect create mcp.contentful.com`.
@@ -30,7 +25,7 @@ export default defineMcpClientConnection({
     displayName: "Contentful",
     // Without an explicit resource indicator, Contentful issues a token for
     // its internal origin and the MCP server rejects it (audience mismatch).
-    tokenParams: { resources: ["https://mcp.contentful.com/mcp"] },
+    tokenParams: { resources: [CONTENTFUL_MCP_URL] },
   }),
   tools: {
     allow: [
@@ -46,8 +41,8 @@ export default defineMcpClientConnection({
   },
   toolCall: {
     providedArguments: {
-      spaceId: () => requiredEnv("CONTENTFUL_SPACE_ID"),
-      environmentId: () => requiredEnv("CONTENTFUL_ENVIRONMENT_ID"),
+      spaceId: () => contentfulTarget().spaceId,
+      environmentId: () => contentfulTarget().environmentId,
     },
   },
 });
