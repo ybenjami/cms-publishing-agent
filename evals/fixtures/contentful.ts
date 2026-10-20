@@ -123,11 +123,15 @@ const newsArticle = {
   ],
 };
 
-/** One short field and one long-text field, with no rich text body. */
-export const exhibitUpdate = {
-  sys: { id: "exhibitUpdate", type: "ContentType" },
-  name: "Exhibit Update",
-  description: "A short update about an exhibit.",
+/**
+ * A headline and one required long-text field: no rich text body, and no
+ * author, credit, or image fields. Only the full-text eval uses it, so the
+ * other evals see the same content model as before.
+ */
+export const announcement = {
+  sys: { id: "announcement", type: "ContentType" },
+  name: "Announcement",
+  description: "A short announcement.",
   displayField: "headline",
   fields: [
     {
@@ -142,7 +146,7 @@ export const exhibitUpdate = {
       id: "details",
       name: "Details",
       type: "Text",
-      required: false,
+      required: true,
       localized: false,
       validations: [],
     },
@@ -167,7 +171,7 @@ export const blogPostFieldIds = blogPost.fields.map((field) => field.id);
 /** The content model most evals use: two similar types and a reference target. */
 const defaultContentTypes = [blogPost, newsArticle, author];
 
-type ContentType = (typeof defaultContentTypes)[number] | typeof exhibitUpdate;
+type ContentType = (typeof defaultContentTypes)[number] | typeof announcement;
 
 /** An existing, published blog post for the update eval. */
 export const springPlantSale = {
