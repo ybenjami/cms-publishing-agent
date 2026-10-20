@@ -108,13 +108,13 @@ Setup creates a Slack app through Vercel Connect for the connector named in [`ag
 
 ### Evals
 
-Sign in to Contentful once through `npm run dev` first (finish a request that asks you to). Then, with the dev server still running:
+Sign in to Contentful once through `npm run dev` first (finish a request that asks you to), then stop the dev server and run:
 
 ```bash
-npm run eval -- --url http://127.0.0.1:2000
+npm run eval
 ```
 
-`npm run eval` without `--url` won't start while a dev server is running for the project.
+This starts its own dev server, so it won't run while another one is running for the project. To use a running `npm run dev` instead, pass its URL: `npm run eval -- --url http://127.0.0.1:2000`.
 
 There are five evals. Four cover extra information beyond the content type, a missing required field, an ambiguous content type, and updating an existing entry. The fifth sends a multi-sentence draft for an Announcement (a headline and a long-text field, no rich text body) and checks that every substantive sentence is saved while the photo credit, which has no field, is left out and reported. Every Contentful call is stubbed with a small fixture content model ([`evals/fixtures/contentful.ts`](evals/fixtures/contentful.ts)), so evals are repeatable and never write to Contentful. eve still lists the connection's tools live, which is why they need your Contentful sign-in. They do call the live model, so each run uses AI Gateway credits.
 
@@ -126,6 +126,7 @@ Found while building this; each one notes what the project does about it.
 - **A new Contentful sign-in revokes the same person's earlier token.** If you use both the terminal UI and Slack, you'll sign in again each time you switch. The agent asks for the new sign-in on its own.
 - **Contentful's MCP server listed all 85 tools** for this project's sign-in, including publish and delete. The connection's allow-list is what keeps them away from the model; don't rely on the server to hide them.
 - **eve's optional built-in tools can distract the model.** Before `defaultTools: false`, the model in `eve dev` tried eve's `bash` tool and self-modification agent before the Contentful tools, and eve then added `just-bash` and `microsandbox` to `package.json`. The agent now turns those tools off. If eve's development extensions still get in the way, run `eve dev --no-default-extensions`.
+- **The model doesn't always ask when the content type is ambiguous.** The instructions tell it to stop and ask when a request doesn't name a content type and more than one fits. In testing, the `ambiguous-content-type` eval passed 9 of 10 runs; the failure created a draft in the closest type instead of asking.
 - **`eve remote invoke --resume` (eve 0.81) rejects its own output after a sign-in.** The paused result has extra fields that the resume schema doesn't allow. Keep only `authorization`, `description`, `name`, and `webhookUrl` on each authorization before resuming.
 
 ## How this was built
